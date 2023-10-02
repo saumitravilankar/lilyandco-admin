@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-
 import prismadb from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 
@@ -9,7 +8,8 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const { name, price, images, sizes, colors } = body;
+    const { name, price, images, sizes, colors, newPrice, isFeatured, isNew } =
+      body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 403 });
@@ -50,6 +50,9 @@ export async function POST(req: Request) {
         colors: {
           connect: colors.map((color: string) => ({ id: color })),
         },
+        isFeatured,
+        isNew,
+        newPrice,
       },
       include: {
         colors: true,
@@ -66,7 +69,15 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const isFeatured = searchParams.get("isFeatured");
+    const isNew = searchParams.get("isNew");
+
     const products = await prismadb.product.findMany({
+      where: {
+        isFeatured: isFeatured ? true : undefined,
+        isNew: isNew ? true : undefined,
+      },
       include: {
         images: true,
         sizes: true,

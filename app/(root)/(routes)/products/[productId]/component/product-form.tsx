@@ -50,6 +50,11 @@ const FormSchema = z.object({
   colors: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one item.",
   }),
+  newPrice: z.coerce
+    .number()
+    .optional(),
+  isFeatured: z.boolean().optional(),
+  isNew: z.boolean().optional(),
 });
 
 export const ProductForm: React.FC<ProductFormProps> = ({
@@ -83,6 +88,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         price: 0,
         sizes: [],
         colors: [],
+        newPrice: 0,
+        isFeatured: false,
+        isNew: true,
       };
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -91,6 +99,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    console.log(data);
+
     try {
       setLoading(true);
       if (initialData) {
@@ -150,37 +160,34 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="w-2/3 space-y-6 my-10"
+          className="space-y-6 my-10"
         >
-          <div className="space-y-6">
-            {/* Image Form Field */}
-            <FormField
-              control={form.control}
-              name="images"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Images</FormLabel>
-                  <FormControl>
-                    <ImageUpload
-                      value={field.value.map((image) => image.url)}
-                      disabled={loading}
-                      onChange={(url) =>
-                        field.onChange([...field.value, { url }])
-                      }
-                      onRemove={(url) =>
-                        field.onChange([
-                          ...field.value.filter(
-                            (current) => current.url !== url
-                          ),
-                        ])
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+          {/* Image Form Field */}
+          <FormField
+            control={form.control}
+            name="images"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Images</FormLabel>
+                <FormControl>
+                  <ImageUpload
+                    value={field.value.map((image) => image.url)}
+                    disabled={loading}
+                    onChange={(url) =>
+                      field.onChange([...field.value, { url }])
+                    }
+                    onRemove={(url) =>
+                      field.onChange([
+                        ...field.value.filter((current) => current.url !== url),
+                      ])
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="md:grid md:grid-cols-3 gap-8">
             {/* Product Name Form Field */}
             <FormField
               control={form.control}
@@ -223,95 +230,166 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />
 
+            {/* newPrice Form Field */}
+            <FormField
+              control={form.control}
+              name="newPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discounted Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      disabled={loading}
+                      placeholder="9.99"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter the discounted Price. Optional!
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Size Form Field */}
             <FormItem>
               <div className="mb-4">
-                <FormLabel className="text-base">Sidebar</FormLabel>
+                <FormLabel className="text-base">Sizes</FormLabel>
                 <FormDescription>
                   Select the items you want to display in the sidebar.
                 </FormDescription>
               </div>
-              {availableSizes.map((size) => (
-                <FormField
-                  key={size.id}
-                  control={form.control}
-                  name="sizes"
-                  render={({ field }) => {
-                    return (
-                      <FormItem
-                        key={size.id}
-                        className="flex flex-row items-start space-x-3 space-y-0"
-                      >
-                        <FormControl>
-                          <Checkbox
-                            disabled={loading}
-                            checked={field.value?.includes(size.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([...field.value, size.id])
-                                : field.onChange(
-                                    field.value?.filter(
-                                      (value) => value !== size.id
-                                    )
-                                  );
-                            }}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          {size.name}
-                        </FormLabel>
-                      </FormItem>
-                    );
-                  }}
-                />
-              ))}
+              <div className="grid grid-cols-3 gap-y-4">
+                {availableSizes.map((size) => (
+                  <FormField
+                    key={size.id}
+                    control={form.control}
+                    name="sizes"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={size.id}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              disabled={loading}
+                              checked={field.value?.includes(size.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...field.value, size.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== size.id
+                                      )
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {size.name}
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
 
             {/* Colors Form Field */}
             <FormItem>
               <div className="mb-4">
-                <FormLabel className="text-base">Sidebar</FormLabel>
+                <FormLabel className="text-base">Colors</FormLabel>
                 <FormDescription>
                   Select the items you want to display in the sidebar.
                 </FormDescription>
               </div>
-              {availableColors.map((color) => (
-                <FormField
-                  key={color.id}
-                  control={form.control}
-                  name="colors"
-                  render={({ field }) => {
-                    return (
-                      <FormItem
-                        key={color.id}
-                        className="flex flex-row items-start space-x-3 space-y-0"
-                      >
-                        <FormControl>
-                          <Checkbox
-                            disabled={loading}
-                            checked={field.value?.includes(color.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([...field.value, color.id])
-                                : field.onChange(
-                                    field.value?.filter(
-                                      (value) => value !== color.id
-                                    )
-                                  );
-                            }}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          {color.name}
-                        </FormLabel>
-                      </FormItem>
-                    );
-                  }}
-                />
-              ))}
+              <div className="grid grid-cols-3 gap-y-4">
+                {availableColors.map((color) => (
+                  <FormField
+                    key={color.id}
+                    control={form.control}
+                    name="colors"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={color.id}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              disabled={loading}
+                              checked={field.value?.includes(color.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...field.value, color.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== color.id
+                                      )
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {color.name}
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
+
+            {/* isFeatured Form Field */}
+            <FormField
+              control={form.control}
+              name="isFeatured"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Featured</FormLabel>
+                    <FormDescription>
+                      This product will appear on the home page
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* isNew Form Field */}
+            <FormField
+              control={form.control}
+              name="isNew"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>New</FormLabel>
+                    <FormDescription>
+                      This product will appear in New collections.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
           </div>
           <Button disabled={loading} type="submit">
             {button}

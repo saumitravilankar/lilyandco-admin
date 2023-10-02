@@ -67,7 +67,8 @@ export async function PATCH(
 
     const body = await req.json();
 
-    const { name, price, images, sizes, colors } = body;
+    const { name, price, images, sizes, colors, newPrice, isFeatured, isNew } =
+      body;
 
     if (!userId) {
       return new NextResponse("Unauthenticated", { status: 403 });
@@ -104,8 +105,21 @@ export async function PATCH(
       data: {
         name,
         price,
+        isFeatured: {
+          set: false,
+        },
+        isNew: {
+          set: false,
+        },
+        newPrice,
         images: {
           deleteMany: {},
+        },
+        sizes: {
+          set: [],
+        },
+        colors: {
+          set: [],
         },
       },
     });
@@ -126,6 +140,9 @@ export async function PATCH(
         colors: {
           connect: colors.map((color: string) => ({ id: color })),
         },
+        isFeatured,
+        isNew,
+        newPrice,
       },
     });
 

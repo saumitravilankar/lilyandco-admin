@@ -9,15 +9,18 @@ generator client {
 }
 
 model Product {
-  id        String   @id @default(uuid())
-  name      String
-  price     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  sizes     Size[]
-  colors    Color[]
-  images    Image[]
-  orders    Order[]
+  id         String      @id @default(uuid())
+  name       String
+  price      Int
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  isFeatured Boolean     @default(false)
+  newPrice   Int         @default(0)
+  isNew      Boolean     @default(true)
+  sizes      Size[]
+  colors     Color[]
+  images     Image[]
+  orderItems OrderItem[]
 }
 
 model Size {
@@ -50,13 +53,30 @@ model Image {
 }
 
 model Order {
-  id          String    @id @default(uuid())
-  products    Product[]
-  isPaid      Boolean   @default(false)
-  phone       String    @default("")
-  address     String    @default("")
-  userId      String
-  quantity    Int
-  total_price Int
-  payment_id  String
+  id             String      @id @default(uuid())
+  user_Id        String
+  total_quantity Int
+  total_price    Int
+  orderItems     OrderItem[]
+  isPaid         Boolean     @default(false)
+  phone          String      @default("")
+  address        String      @default("")
+  payment_id     String      @default("")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  quantity  Int      @default(1)
+  price     Int
+  order     Order?   @relation(fields: [orderId], references: [id])
+  orderId   String?
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
 }

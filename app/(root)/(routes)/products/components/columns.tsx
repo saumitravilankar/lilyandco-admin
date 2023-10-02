@@ -11,6 +11,7 @@ export type ProductColumns = {
   id: string;
   name: string;
   price: number;
+  newPrice: number;
   createdAt: Date;
 };
 
@@ -30,6 +31,23 @@ export const columns: ColumnDef<ProductColumns>[] = [
       }).format(amount);
 
       return <div className="">{formatted}</div>;
+    },
+  },
+  {
+    accessorKey: "newPrice",
+    header: "Discounted Price",
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue("newPrice"));
+      const formatted = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+      }).format(amount);
+
+      return (
+        <div className="">
+          {formatted === "₹0.00" ? "No discount" : formatted}
+        </div>
+      );
     },
   },
   {
